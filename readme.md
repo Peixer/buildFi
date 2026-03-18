@@ -119,3 +119,9 @@ buildfi/
 ├── package.json
 ├── turbo.json
 └── README.md
+```
+
+## Running the app
+
+1. **API** (Rust): from repo root run `cargo run -p buildfi-api`. Listens on http://localhost:8080 by default.
+2. **Web** (Next.js): from repo root run `npm install` then `npm run dev`. Open http://localhost:3000. The explore page uses the API; set `NEXT_PUBLIC_API_URL` in `apps/web/.env.local` if the API runs elsewhere.
