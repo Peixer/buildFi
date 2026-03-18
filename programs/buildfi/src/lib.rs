@@ -38,10 +38,10 @@ pub struct CreateProject<'info> {
     #[account(mut)]
     pub vault: UncheckedAccount<'info>,
 
-    /// Participation token mint. Created in instruction via create_account + initialize_mint2.
-    /// CHECK: new account created in instruction, then initialized by token program
+    /// Participation token mint. Keypair must sign (required for create_account CPI).
+    /// Created in instruction via create_account + initialize_mint2.
     #[account(mut)]
-    pub participation_mint: UncheckedAccount<'info>,
+    pub participation_mint: Signer<'info>,
 
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 
@@ -66,7 +66,7 @@ pub struct Deposit<'info> {
     pub buyer_account: Account<'info, Buyer>,
 
     #[account(mut, has_one = vault, has_one = participation_mint)]
-    pub project: Account<'info, Project>,
+    pub project: Box<Account<'info, Project>>,
 
     /// CHECK: validated by project.vault
     #[account(mut)]
@@ -78,6 +78,7 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub buyer_participation_ata: InterfaceAccount<'info, TokenAccount>,
 
+    #[account(mut)]
     pub participation_mint: InterfaceAccount<'info, Mint>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
 
@@ -120,7 +121,7 @@ pub struct Refund<'info> {
     pub buyer_account: Account<'info, Buyer>,
 
     #[account(has_one = vault, has_one = participation_mint)]
-    pub project: Account<'info, Project>,
+    pub project: Box<Account<'info, Project>>,
 
     /// CHECK: project_authority PDA
     #[account(mut, seeds = [b"project_authority", project.key().as_ref()], bump = project.bump)]
@@ -135,6 +136,7 @@ pub struct Refund<'info> {
     #[account(mut)]
     pub buyer_participation_ata: InterfaceAccount<'info, TokenAccount>,
 
+    #[account(mut)]
     pub participation_mint: InterfaceAccount<'info, Mint>,
     pub usdc_mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,

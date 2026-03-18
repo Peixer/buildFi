@@ -36,14 +36,14 @@ pub fn handler(ctx: Context<crate::Refund>) -> Result<()> {
         ctx.accounts.usdc_mint.decimals,
     )?;
 
-    let burn_ctx = CpiContext::new_with_signer(
+    // Burn requires the token account owner (buyer) to sign, not the mint authority.
+    let burn_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         Burn {
             mint: ctx.accounts.participation_mint.to_account_info(),
             from: ctx.accounts.buyer_participation_ata.to_account_info(),
-            authority: ctx.accounts.project_authority.to_account_info(),
+            authority: ctx.accounts.buyer.to_account_info(),
         },
-        signer_seeds,
     );
     burn(burn_ctx, amount)?;
 

@@ -12,7 +12,6 @@ pub fn handler(ctx: Context<crate::DeleteProject>) -> Result<()> {
     let owner = &ctx.accounts.owner;
     let project_authority = &ctx.accounts.project_authority;
     let vault = &ctx.accounts.vault;
-    let participation_mint = &ctx.accounts.participation_mint;
     let token_program = &ctx.accounts.token_program;
 
     let close_vault_ix = anchor_spl::token::spl_token::instruction::close_account(
@@ -38,23 +37,8 @@ pub fn handler(ctx: Context<crate::DeleteProject>) -> Result<()> {
         &[seeds],
     )?;
 
-    let close_mint_ix = anchor_spl::token::spl_token::instruction::close_account(
-        &token_program.key(),
-        &participation_mint.key(),
-        &owner.key(),
-        &project_authority.key(),
-        &[],
-    )?;
-    anchor_lang::solana_program::program::invoke_signed(
-        &close_mint_ix,
-        &[
-            participation_mint.to_account_info(),
-            owner.to_account_info(),
-            project_authority.to_account_info(),
-            token_program.to_account_info(),
-        ],
-        &[seeds],
-    )?;
+    // Note: Standard SPL Token does not support closing mint accounts; only token accounts
+    // can be closed. The participation mint is left with 0 supply; rent is not reclaimed.
 
     Ok(())
 }
