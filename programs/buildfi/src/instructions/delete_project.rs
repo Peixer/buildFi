@@ -39,6 +39,7 @@ pub fn handler(ctx: Context<crate::DeleteProject>) -> Result<()> {
 
     // Note: Standard SPL Token does not support closing mint accounts; only token accounts
     // can be closed. The participation mint is left with 0 supply; rent is not reclaimed.
+    // Buyer PDAs for this project are not closed and remain as historical records.
 
     Ok(())
 }

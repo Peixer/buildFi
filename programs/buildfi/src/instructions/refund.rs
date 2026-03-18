@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::get_associated_token_address_with_program_id;
 use anchor_spl::token::{burn, transfer_checked, Burn, TransferChecked};
 
 use crate::error::BuildFiError;
@@ -12,6 +13,24 @@ pub fn handler(ctx: Context<crate::Refund>) -> Result<()> {
     let buyer_account = &ctx.accounts.buyer_account;
     let amount = buyer_account.amount;
     require!(amount > 0, BuildFiError::InvalidAmount);
+    let expected_usdc_ata = get_associated_token_address_with_program_id(
+        &ctx.accounts.buyer.key(),
+        &ctx.accounts.usdc_mint.key(),
+        &ctx.accounts.token_program.key(),
+    );
+    require!(
+        ctx.accounts.buyer_usdc_ata.key() == expected_usdc_ata,
+        BuildFiError::InvalidTokenAccount
+    );
+    let expected_participation_ata = get_associated_token_address_with_program_id(
+        &ctx.accounts.buyer.key(),
+        &ctx.accounts.participation_mint.key(),
+        &ctx.accounts.token_program.key(),
+    );
+    require!(
+        ctx.accounts.buyer_participation_ata.key() == expected_participation_ata,
+        BuildFiError::InvalidTokenAccount
+    );
 
     let project_key = project.key();
     let seeds: &[&[u8]] = &[

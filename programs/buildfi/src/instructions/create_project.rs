@@ -70,6 +70,7 @@ pub fn handler(
         None,
     )?;
 
+    require!(funding_target > 0, BuildFiError::FundingTargetMustBePositive);
     require!(name.len() <= MAX_NAME_LEN, BuildFiError::NameTooLong);
     require!(
         description.len() <= MAX_DESCRIPTION_LEN,
@@ -81,6 +82,12 @@ pub fn handler(
     );
     let total_pct: u16 = milestones.iter().map(|m| m.percentage as u16).sum();
     require!(total_pct == 100, BuildFiError::MilestonePercentagesMustSumTo100);
+    for m in &milestones {
+        require!(
+            m.percentage > 0,
+            BuildFiError::MilestonePercentageMustBePositive
+        );
+    }
 
     let project = &mut ctx.accounts.project;
     project.owner = ctx.accounts.owner.key();

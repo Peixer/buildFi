@@ -13,6 +13,7 @@ pub use state::*;
 
 // --- Accounts structs (must live in lib.rs for Anchor #[program] macro) ---
 
+/// Reserved for future program config or upgrade use. Currently a no-op.
 #[derive(Accounts)]
 pub struct Initialize {}
 
@@ -72,9 +73,11 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub vault: UncheckedAccount<'info>,
 
+    /// Must be buyer's USDC ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
     pub buyer_usdc_ata: InterfaceAccount<'info, TokenAccount>,
 
+    /// Must be buyer's participation ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
     pub buyer_participation_ata: InterfaceAccount<'info, TokenAccount>,
 
@@ -105,6 +108,7 @@ pub struct ReleaseCapital<'info> {
     #[account(mut)]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
+    /// Must be owner's USDC ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
     pub owner_usdc_ata: InterfaceAccount<'info, TokenAccount>,
 
@@ -130,9 +134,11 @@ pub struct Refund<'info> {
     #[account(mut)]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
+    /// Must be buyer's USDC ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
     pub buyer_usdc_ata: InterfaceAccount<'info, TokenAccount>,
 
+    /// Must be buyer's participation ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
     pub buyer_participation_ata: InterfaceAccount<'info, TokenAccount>,
 
@@ -195,7 +201,9 @@ pub mod buildfi {
         instructions::deposit::handler(ctx, amount)
     }
 
-    /// Release capital to project owner for the next milestone (vault balance * milestone_pct / 100).
+    /// Release capital to project owner for the next milestone.
+    /// Amount = current vault balance * milestone_pct / 100 (percentage of current balance, not of funding target).
+    /// On the final milestone, any remaining vault balance (rounding dust) is swept to the owner.
     pub fn release_capital(ctx: Context<ReleaseCapital>) -> Result<()> {
         instructions::release_capital::handler(ctx)
     }
@@ -206,6 +214,7 @@ pub mod buildfi {
     }
 
     /// Close project (only when vault balance is zero). Refund or release all funds first.
+    /// Note: Buyer PDAs and the participation mint are not closed (SPL mints cannot be closed; Buyer accounts remain as historical data).
     pub fn delete_project(ctx: Context<DeleteProject>) -> Result<()> {
         instructions::delete_project::handler(ctx)
     }
