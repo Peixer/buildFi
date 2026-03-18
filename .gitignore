@@ -1,1 +1,3 @@
 /target
+/apps/api/target
+/apps/api/.env

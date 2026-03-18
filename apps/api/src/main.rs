@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use buildfi_api::{app, Config, MemoryStore, Store};
+use buildfi_api::{app, Config, MemoryStore, PostgresStore, Store};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -16,7 +16,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .init();
 
     let config = Config::from_env()?;
-    let store: Store = Arc::new(MemoryStore::new());
+    let store: Store = match &config.database_url {
+        Some(url) => Arc::new(PostgresStore::connect(url).await?),
+        None => Arc::new(MemoryStore::new()),
+    }; 
 
     let cors = CorsLayer::new()
         .allow_origin(Any)

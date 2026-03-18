@@ -58,10 +58,20 @@ curl -X POST http://localhost:8080/projects \
   }'
 ```
 
+## Database (PostgreSQL)
+
+To persist data in PostgreSQL:
+
+1. From the **repository root**, start Postgres: `docker compose up -d`
+2. Copy `apps/api/.env.example` to `apps/api/.env` and set `DATABASE_URL=postgres://buildfi:buildfi@localhost:5432/buildfi` (or match the credentials in `docker-compose.yml`)
+3. Run the API; migrations run automatically on startup when using the Postgres store.
+
+Without `DATABASE_URL`, the API uses an in-memory store (no Docker required).
+
 ## Configuration
 
 Copy `.env.example` to `.env` and adjust. Options:
 
 - `PORT` — HTTP port (default: 8080)
-- `DATABASE_URL` — Optional; when unset, an in-memory store is used
+- `DATABASE_URL` — Optional; when set, use PostgreSQL store; when unset, in-memory store is used
 - `RUST_LOG` — Log level (e.g. `info`, `debug`)

@@ -1,6 +1,8 @@
 mod memory;
+mod postgres;
 
 pub use memory::MemoryStore;
+pub use postgres::PostgresStore;
 
 use crate::error::AppError;
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
