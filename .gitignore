@@ -1,3 +1,5 @@
 /target
 /apps/api/target
 /apps/api/.env
+/apps/web/.env
+node_modules
