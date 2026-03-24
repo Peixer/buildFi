@@ -1,15 +1,18 @@
 /**
  * Build create_project transaction for the BuildFi program.
- * Caller must partialSign with projectKp and participationMintKp, then have owner sign (e.g. via Privy).
+ * Uses VersionedTransaction so that when Privy adds the owner signature, it does not
+ * clear the program keypair signatures (legacy Transaction.sign() has that bug).
  */
 
 import type { Program } from "@coral-xyz/anchor";
 import {
   Keypair,
   PublicKey,
-  Transaction,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
+  TransactionMessage,
+  VersionedTransaction,
+  type Blockhash,
 } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
@@ -20,7 +23,7 @@ import type { Idl } from "@coral-xyz/anchor";
 import { BN } from "@coral-xyz/anchor";
 
 const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_BUILDFI_PROGRAM_ID ?? "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+  process.env.NEXT_PUBLIC_BUILDFI_PROGRAM_ID ?? "BcZabTwE6GoE4YVZ4fyrxhhmCw3FNrLYvhyCAmcXckDj"
 );
 
 export function projectAuthorityPda(projectPk: PublicKey): PublicKey {
@@ -56,15 +59,16 @@ export interface CreateProjectParams {
 }
 
 /**
- * Build a create_project transaction. Returns the transaction and the two keypairs.
- * Client must: tx.partialSign(projectKp, participationMintKp), then serialize and send via wallet.
+ * Build a create_project VersionedTransaction. Signs with projectKp and participationMintKp.
+ * Client must pass to Privy signAndSendTransaction; Privy adds owner signature (VersionedTransaction.sign does not clear existing sigs).
  */
 export async function buildCreateProjectTx(
   program: Program<Idl>,
   owner: PublicKey,
   usdcMint: PublicKey,
-  params: CreateProjectParams
-): Promise<{ tx: Transaction; projectKp: Keypair; participationMintKp: Keypair }> {
+  params: CreateProjectParams,
+  blockhash: Blockhash
+): Promise<{ tx: VersionedTransaction; projectKp: Keypair; participationMintKp: Keypair }> {
   const projectKp = Keypair.generate();
   const participationMintKp = Keypair.generate();
   const projectAuthority = projectAuthorityPda(projectKp.publicKey);
@@ -73,7 +77,7 @@ export async function buildCreateProjectTx(
   const milestones = params.milestones.map((m) => milestone(m.name, m.percentage));
   const fundingTarget = new BN(params.fundingTargetLamports);
 
-  const tx = await (program.methods as any)
+  const createProjectIx = await (program.methods as any)
     .createProject(params.name, params.description, fundingTarget, milestones)
     .accountsStrict({
       owner,
@@ -88,7 +92,16 @@ export async function buildCreateProjectTx(
       rent: SYSVAR_RENT_PUBKEY,
     })
     .signers([projectKp, participationMintKp])
-    .transaction();
+    .instruction();
+
+  const messageV0 = new TransactionMessage({
+    payerKey: owner,
+    recentBlockhash: blockhash,
+    instructions: [createProjectIx],
+  }).compileToV0Message();
+
+  const tx = new VersionedTransaction(messageV0);
+  tx.sign([projectKp, participationMintKp]);
 
   return { tx, projectKp, participationMintKp };
 }

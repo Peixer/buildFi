@@ -103,29 +103,25 @@ export default function CreatePage() {
         })),
       };
 
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       const { tx, projectKp, participationMintKp } = await buildCreateProjectTx(
         program,
         owner,
         usdcMint,
-        params
-      );
+        params,
+        blockhash
+      );  
 
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash("confirmed");
-      tx.feePayer = owner;
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(projectKp, participationMintKp);
-
-      const serialized = tx.serialize({ requireAllSignatures: false });
+      const serialized = tx.serialize();
       await signAndSendTransaction({
-        transaction: new Uint8Array(serialized),
+        transaction: serialized,
         wallet: wallets[0],
         chain: PRIVY_SOLANA_CHAIN,
       });
 
       const projectAddress = projectKp.publicKey.toBase58();
       router.push(`/project/${projectAddress}`);
-    } catch (err) {
+    } catch (err) { 
       setError(formatPrivyTransactionError(err) || "Failed to create project.");
     } finally {
       setSubmitting(false);

@@ -3,10 +3,10 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-buildfi = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+buildfi = "BcZabTwE6GoE4YVZ4fyrxhhmCw3FNrLYvhyCAmcXckDj"
 
 [programs.devnet]
-buildfi = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+buildfi = "BcZabTwE6GoE4YVZ4fyrxhhmCw3FNrLYvhyCAmcXckDj"
 
 [registry]
 url = "https://api.apr.dev"

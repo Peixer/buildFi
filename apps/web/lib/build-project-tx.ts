@@ -23,7 +23,7 @@ import {
 export { projectAuthorityPda };
 
 const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_BUILDFI_PROGRAM_ID ?? "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+  process.env.NEXT_PUBLIC_BUILDFI_PROGRAM_ID ?? "BcZabTwE6GoE4YVZ4fyrxhhmCw3FNrLYvhyCAmcXckDj"
 );
 
 export function buyerPda(projectPk: PublicKey, buyerPk: PublicKey): PublicKey {

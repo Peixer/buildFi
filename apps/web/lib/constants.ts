@@ -5,7 +5,7 @@
 
 export const BUILDFI_PROGRAM_ID =
   (process.env.NEXT_PUBLIC_BUILDFI_PROGRAM_ID as string | undefined) ??
-  "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS";
+  "BcZabTwE6GoE4YVZ4fyrxhhmCw3FNrLYvhyCAmcXckDj";
 
 export const SOLANA_RPC_URL =
   (process.env.NEXT_PUBLIC_SOLANA_RPC_URL as string | undefined) ??
