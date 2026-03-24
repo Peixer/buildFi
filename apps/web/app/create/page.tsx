@@ -104,7 +104,7 @@ export default function CreatePage() {
       };
 
       const { blockhash } = await connection.getLatestBlockhash("confirmed");
-      const { tx, projectKp, participationMintKp } = await buildCreateProjectTx(
+      const { tx, projectKp } = await buildCreateProjectTx(
         program,
         owner,
         usdcMint,
