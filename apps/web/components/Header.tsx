@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 
@@ -9,10 +10,21 @@ function truncateAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function useHasMounted(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
 export function Header() {
+  const hasMounted = useHasMounted();
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets } = useWallets();
   const solanaWallet = wallets[0];
+
+  const showAuth = hasMounted && ready;
 
   return (
     <header className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
@@ -36,7 +48,19 @@ export function Header() {
           >
             Explore
           </Link>
-          {ready && (
+          <Link
+            href="/create"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+          >
+            Create
+          </Link>
+          <Link
+            href="/wallet"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+          >
+            My wallet
+          </Link>
+          {showAuth && (
             <div className="flex items-center gap-3">
               {authenticated && solanaWallet && (
                 <span

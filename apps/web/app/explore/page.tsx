@@ -1,19 +1,18 @@
-import { fetchProjects } from "@/lib/api";
+import { fetchAllProjects } from "@/lib/program";
 import type { Project } from "@/lib/types";
 import { ProjectCard } from "@/components/ProjectCard";
 
 export const dynamic = "force-dynamic";
 
 export default async function ExplorePage() {
-  let projects: Project[];
+  let projects: Project[] = [];
   let error: string | null = null;
 
   try {
-    projects = await fetchProjects();
+    projects = await fetchAllProjects();
   } catch (e) {
     error =
-      e instanceof Error ? e.message : "Unable to load projects. Is the API running?";
-    projects = [];
+      e instanceof Error ? e.message : "Unable to load projects. Check RPC and try again.";
   }
 
   return (
@@ -37,11 +36,11 @@ export default async function ExplorePage() {
 
         {!error && projects.length === 0 && (
           <p className="mt-8 text-zinc-500 dark:text-zinc-400">
-            No projects yet. Create one via the API to see them here.
+            No projects yet. Create one to get started.
           </p>
         )}
 
-        {projects.length > 0 && (
+        {!error && projects.length > 0 && (
           <ul className="mt-8 grid gap-6 sm:grid-cols-1">
             {projects.map((project) => (
               <li key={project.id}>

@@ -1,9 +1,13 @@
+import Link from "next/link";
 import type { Project } from "@/lib/types";
 
-function formatFundingTarget(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return String(value);
+/** USDC SPL token uses 6 decimals; on-chain amounts are in smallest units. */
+const USDC_DECIMALS = 6;
+
+function formatFundingTarget(usdc: number): string {
+  if (usdc >= 1_000_000) return `${(usdc / 1_000_000).toFixed(1)}M`;
+  if (usdc >= 1_000) return `${(usdc / 1_000).toFixed(1)}K`;
+  return String(usdc);
 }
 
 export function ProjectCard({ project }: { project: Project }) {
@@ -13,10 +17,11 @@ export function ProjectCard({ project }: { project: Project }) {
       : "No milestones";
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:border-zinc-700">
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {project.name}
-      </h2>
+    <Link href={`/project/${project.id}`}>
+      <article className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:border-zinc-700">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          {project.name}
+        </h2>
       <p className="mt-2 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
         {project.description}
       </p>
@@ -24,7 +29,7 @@ export function ProjectCard({ project }: { project: Project }) {
         <div>
           <dt className="sr-only">Funding target</dt>
           <dd className="font-medium text-zinc-900 dark:text-zinc-50">
-            {formatFundingTarget(project.funding_target)} USDC
+            {formatFundingTarget(project.funding_target / 10 ** USDC_DECIMALS)} USDC
           </dd>
         </div>
         <div className="min-w-0 flex-1">
@@ -35,5 +40,6 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
       </dl>
     </article>
+    </Link>
   );
 }
