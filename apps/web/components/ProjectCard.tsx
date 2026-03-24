@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Project } from "@/lib/types";
 
 function formatFundingTarget(value: number): string {
@@ -13,10 +14,11 @@ export function ProjectCard({ project }: { project: Project }) {
       : "No milestones";
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:border-zinc-700">
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {project.name}
-      </h2>
+    <Link href={`/project/${project.id}`}>
+      <article className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:border-zinc-700">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          {project.name}
+        </h2>
       <p className="mt-2 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
         {project.description}
       </p>
@@ -35,5 +37,6 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
       </dl>
     </article>
+    </Link>
   );
 }

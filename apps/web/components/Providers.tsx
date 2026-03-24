@@ -1,5 +1,6 @@
 "use client";
 
+import { SOLANA_RPC_URL, SOLANA_RPC_URL_SUBSCRIPTIONS } from "@/lib/constants";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
@@ -30,16 +31,10 @@ export function Providers({ children }: { children: ReactNode }) {
         },
         solana: {
           rpcs: {
-            "solana:mainnet": {
-              rpc: createSolanaRpc("https://api.mainnet-beta.solana.com"),
-              rpcSubscriptions: createSolanaRpcSubscriptions(
-                "wss://api.mainnet-beta.solana.com"
-              ),
-            },
             "solana:devnet": {
-              rpc: createSolanaRpc("https://api.devnet.solana.com"),
+              rpc: createSolanaRpc(SOLANA_RPC_URL),
               rpcSubscriptions: createSolanaRpcSubscriptions(
-                "wss://api.devnet.solana.com"
+                SOLANA_RPC_URL_SUBSCRIPTIONS
               ),
             },
           },

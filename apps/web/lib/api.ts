@@ -1,3 +1,8 @@
+/**
+ * Legacy REST API client. No longer used; the web app uses the BuildFi program on Solana.
+ * Kept for reference or optional future use.
+ */
+
 import type { Project } from "./types";
 
 const getApiBase = () =>

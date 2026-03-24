@@ -1,17 +1,80 @@
 /**
- * Types matching the Rust API (apps/api/src/models/project.rs).
+ * Types aligned with the BuildFi on-chain program (programs/buildfi).
+ * Project account public key is used as project id in the UI.
  */
 
+import type { PublicKey } from "@solana/web3.js";
+
+/** Decoded milestone for display (name as string; on-chain name is 32 bytes). */
 export interface Milestone {
   name: string;
   percentage: number;
 }
 
+/** Project as returned from the program (camelCase from IDL). */
+export interface ProjectAccount {
+  owner: PublicKey;
+  name: string;
+  description: string;
+  fundingTarget: { toString(): string };
+  vault: PublicKey;
+  participationMint: PublicKey;
+  bump: number;
+  milestoneCount: number;
+  milestones: Array<{ name: number[]; percentage: number }>;
+  releasedMilestoneCount: number;
+}
+
+/** Project with publicKey as id for UI (and decoded milestones). */
 export interface Project {
   id: string;
   name: string;
   description: string;
   funding_target: number;
-  escrow_treasury_address: string;
+  vault: string;
+  owner: string;
+  participation_mint: string;
+  milestone_count: number;
+  released_milestone_count: number;
   milestones: Milestone[];
+}
+
+/** Buyer account from chain. */
+export interface BuyerAccount {
+  user: PublicKey;
+  project: PublicKey;
+  amount: { toString(): string; toNumber?(): number };
+}
+
+/** Decode 32-byte milestone name to string. */
+export function decodeMilestoneName(bytes: number[]): string {
+  const buf = Buffer.from(bytes);
+  const end = buf.indexOf(0);
+  return (end >= 0 ? buf.subarray(0, end) : buf).toString("utf8").trim() || "Milestone";
+}
+
+/** Convert raw program project + publicKey to UI Project. */
+export function toUiProject(
+  publicKey: { toBase58(): string },
+  account: ProjectAccount
+): Project {
+  const count = account.milestoneCount ?? 0;
+  const milestones: Milestone[] = (account.milestones ?? [])
+    .slice(0, count)
+    .map((m) => ({
+      name: decodeMilestoneName(m.name),
+      percentage: m.percentage ?? 0,
+    }));
+  return {
+    id: publicKey.toBase58(),
+    name: account.name ?? "",
+    description: account.description ?? "",
+    funding_target: account.fundingTarget ? Number(account.fundingTarget.toString()) : 0,
+    vault: account.vault?.toBase58?.() ?? "",
+    owner: account.owner?.toBase58?.() ?? "",
+    participation_mint: account.participationMint?.toBase58?.() ?? "",
+    milestone_count: count,
+    released_milestone_count: account.releasedMilestoneCount ?? 0,
+    milestones,
+  };
 }
