@@ -1,0 +1,20 @@
+/** Hero / card imagery for projects (deterministic per project id). */
+
+export const PROJECT_HERO_IMAGES = [
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuBR8tXgvayrTiUiwlNskMpohZ1UBUyBo09MpCE4vabz5ESgcoEpmS1cgJQf3MZ2ekBgrWpKmCuVNxTCUPF579bMxSzAIQu-T0YHb-6kHe8oX_RUiygYiSsSQQv1Wp8cTAi0YCx4jU7uMuHVNVNCS-ImWnQTDxJ489LQgBWw3kZDQ48UAalPUMz8fOGTMUAgoYSEkMepBxHqJQm2_xev8rpKqavN1vpWZ0vBfBo18BM4UO3oesvXnfzDu0-TUOzO0J__Ze8AEWroY6K6",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDvBAX5PVDJx-maKmswT4Jft3xX8Yc083OIZQYiW2x5nXgjbxZY0ArvEbFfugor6FvqFEXf9t3F3t3EGSpOe0ifhRA2RUwKbtWffBxpTpcXjEp8LcXt30pWIC7ygcostpHuw1gnV6H_EffepCyHagm3cMGjAVo2sbd9V0RKYFF_Q3nyDb-RqZ7BdjIH-ofi1LYz51CO7ntPcF3hmcjMqIp4JJs-SaZ3sFLfHVPlUYiT7FemBM0-nBS24ufLUxabJ1OOJaBBF-Vp_quz",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuB8v_3kep8TK8zKL1DgyUAciwTwBobWyq1qEVIAz6KgbU3B_z9M7YiX99pEZdeD768ZE79ncC_ubZEY1pCux9oOB6iw383d-fFSTFb4BMSBywuGIrRXHRGtIQyEq4EikRlA1Nu0lLUNEHoxukruMl_u-w8si05kk9WZoOGUuT_FZ7kEQwluJF61XuDzbWibZgXPlseEdF9OlB6w7CMQul6FtMW6gxPDXGOKjipfeD3JJ7lI6Dzo4Xe1zgmU75U4XIU_-Y2GkAqZ_2kz",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDjoaNRkxATGTt-_x9MrRRjdthNO_Fs4nOKxZEdIIh-QgNGdZHnlRQ-cjlKGzYLggxA0ocAPLNnszBtxmhSF7sAwg7fF-j6KldLH_0aEXgp9BCOr-2CC_hkbSK0d36lX2NTSVtLaCwjqme8IjQubzUlK9wAQmiih5zSx8u9Ok1LXv3HX1pBllqjJicGrUTMMEwLycjKWgeA409m2J-GwDD7bjK_wvLIJGe6XniU4mdmySpE5JzmJso_MNTa87rWk1XepQkEEwLYB_ml",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuANQ98l1Tiy1N8WNZEWOwk6z6kD7s8XvaO_z1OmwccYE6SlzKKaY4p_UC1oFRoZrug5QAYnyfaq15bSp3m1CZYdiy_ul7OUh3xLjcdxb7segeLWTUjr9A0BgP9LcMgJ-4QBVf1eDKT6jsQPiewTcr98AUObhxG3rw6qnifriz6kmDcQWgdACYk7QUrgTnu_KtShKefXyrGBtoI1xaxAKpHYk2ptZI57fNJZOdJmKe4fPt2gda77jJo4DrLhJzkmRQNg_GwxyyJpyHld",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuAsMMSSfqgoAWhHTvVDXe_X15rJOCyuAqeV__CtyJotsoKQhC8ZK2VBsJ1Q3jEMUHaUGyvMR6KYMq84TooKXhmVcq5kw_Jz9HsOXFNQ2EqQYld7doCf2ODUTuhudRpQ8-5u4rkNa7MZRVYHdowwEsPvthOOpjIKYyZWP05F4txaEN2QfbxTx2eVLUJS4MMF7yebQuPcKKJyLwS00W2OTdFEVIVMEET642SwFxvBmr7HX7uqU1OmzzPcQ3mzy-nT_jzps-N96sKKxSWP",
+];
+
+export function hashProjectId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+export function heroImageForProjectId(id: string): string {
+  return PROJECT_HERO_IMAGES[hashProjectId(id) % PROJECT_HERO_IMAGES.length];
+}

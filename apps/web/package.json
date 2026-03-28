@@ -17,6 +17,7 @@
     "@solana/kit": "^6.4.0",
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.87.0",
+    "@vis.gl/react-google-maps": "^1.8.1",
     "next": "16.1.7",
     "react": "19.2.3",
     "react-dom": "19.2.3"

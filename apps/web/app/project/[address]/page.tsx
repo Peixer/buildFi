@@ -1,14 +1,31 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { fetchProject, getConnection } from "@/lib/program";
 import { getAccount } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import type { Project } from "@/lib/types";
 import { ProjectView } from "./ProjectView";
 
 export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ address: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { address } = await params;
+  const project = await fetchProject(address);
+  if (!project) {
+    return { title: "Project — BuildFi" };
+  }
+  const title = project.name
+    ? `${project.name} — BuildFi`
+    : "Project — BuildFi";
+  return {
+    title,
+    description:
+      project.description?.slice(0, 160) ||
+      "View funding progress, milestones, and participate through BuildFi on Solana.",
+  };
 }
 
 export default async function ProjectPage({ params }: PageProps) {

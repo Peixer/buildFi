@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
@@ -18,7 +19,14 @@ function useHasMounted(): boolean {
   );
 }
 
+const navLink =
+  "text-slate-600 transition-colors hover:bg-slate-100/50 hover:text-primary dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white";
+
+const navLinkActive =
+  "border-b-2 border-[#14696d] pb-1 text-[#14696d] dark:border-secondary dark:text-secondary-fixed";
+
 export function Header() {
+  const pathname = usePathname();
   const hasMounted = useHasMounted();
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets } = useWallets();
@@ -26,55 +34,60 @@ export function Header() {
 
   const showAuth = hasMounted && ready;
 
+  const isExplore = pathname === "/explore";
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   return (
-    <header className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-transparent bg-white/80 backdrop-blur-md dark:bg-slate-900/80">
+      <nav className="mx-auto flex w-full max-w-[1920px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-8">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+          className="font-headline text-primary shrink-0 text-xl font-black tracking-tighter sm:text-2xl dark:text-white"
         >
           BuildFi
         </Link>
-        <div className="flex items-center gap-6">
+        <div className="order-3 flex min-w-0 max-w-full flex-1 basis-full items-center justify-center gap-4 overflow-x-auto pb-1 text-xs font-bold tracking-tight sm:order-0 sm:max-w-none sm:basis-auto sm:gap-8 sm:pb-0 sm:text-sm md:justify-center">
           <Link
-            href="/"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            href="/explore"
+            className={isExplore ? navLinkActive : navLink}
           >
+            Marketplace
+          </Link>
+          <Link href="/" className={pathname === "/" ? navLinkActive : navLink}>
             Home
           </Link>
           <Link
-            href="/explore"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-          >
-            Explore
-          </Link>
-          <Link
             href="/create"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            className={pathname === "/create" ? navLinkActive : navLink}
           >
             Create
           </Link>
           <Link
             href="/wallet"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            className={pathname === "/wallet" ? navLinkActive : navLink}
           >
-            My wallet
+            Wallet
           </Link>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          {showAuth && authenticated && solanaWallet && (
+            <span
+              className="hidden font-mono text-xs text-zinc-500 sm:inline dark:text-zinc-400"
+              title={solanaWallet.address}
+            >
+              {truncateAddress(solanaWallet.address)}
+            </span>
+          )}
           {showAuth && (
-            <div className="flex items-center gap-3">
-              {authenticated && solanaWallet && (
-                <span
-                  className="text-xs font-mono text-zinc-500 dark:text-zinc-400"
-                  title={solanaWallet.address}
-                >
-                  {truncateAddress(solanaWallet.address)}
-                </span>
-              )}
+            <>
               {authenticated ? (
                 <button
                   type="button"
                   onClick={logout}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className="text-primary rounded-lg px-4 py-2 text-sm font-bold transition-all hover:bg-surface-container-low dark:text-zinc-200"
                 >
                   Log out
                 </button>
@@ -82,13 +95,19 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => login({ loginMethods: ["email"] })}
-                  className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="text-primary rounded-lg px-4 py-2 text-sm font-bold transition-all hover:bg-surface-container-low dark:text-zinc-200"
                 >
-                  Log in
+                  Sign in
                 </button>
               )}
-            </div>
+            </>
           )}
+          <Link
+            href="/create"
+            className="bg-primary rounded-lg px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-container active:scale-95"
+          >
+            List a project
+          </Link>
         </div>
       </nav>
     </header>
