@@ -23,14 +23,70 @@ describe("buildfi", () => {
   let usdcMint: Keypair;
   let usdcMintPk: PublicKey;
 
-  /** Milestone with name (padded to 32 bytes) and percentage (0-100). */
-  function milestone(name: string, percentage: number) {
+  /** Milestone with name (padded to 32 bytes), percentage (0-100), status, estimatedCompletion (i64). */
+  function milestone(
+    name: string,
+    percentage: number,
+    status = 0,
+    estimatedCompletion: anchor.BN = new anchor.BN(0)
+  ) {
     const nameBytes = Buffer.alloc(32);
     Buffer.from(name, "utf8").copy(nameBytes);
     return {
       name: Array.from(nameBytes),
       percentage,
+      status,
+      estimatedCompletion,
     };
+  }
+
+  function builderPda(ownerPk: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("builder"), ownerPk.toBuffer()],
+      program.programId
+    );
+    return pda;
+  }
+
+  /** Trailing args for createProject (metadata + builder profile for first init). */
+  type CreateProjectTailArgs = [
+    string,
+    string,
+    number,
+    string,
+    string,
+    string,
+    anchor.BN,
+    anchor.BN,
+    string,
+    string,
+    string,
+    string,
+    string,
+    anchor.BN,
+    number,
+    number,
+  ];
+
+  function defaultCreateProjectTail(): CreateProjectTailArgs {
+    return [
+      "Test Builder",
+      "",
+      0,
+      "",
+      "",
+      "",
+      new anchor.BN(0),
+      new anchor.BN(0),
+      "",
+      "",
+      "",
+      "",
+      "",
+      new anchor.BN(0),
+      0,
+      0,
+    ];
   }
 
   function projectAuthorityPda(projectPk: PublicKey): [PublicKey, number] {
@@ -139,7 +195,7 @@ describe("buildfi", () => {
       ];
 
       await program.methods
-        .createProject(name, description, fundingTarget, milestones)
+        .createProject(name, description, fundingTarget, milestones, ...defaultCreateProjectTail())
         .accountsStrict({
           owner: payer.publicKey,
           project: projectKp.publicKey,
@@ -151,6 +207,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();
@@ -178,7 +235,8 @@ describe("buildfi", () => {
             "Bad",
             "Bad project",
             new anchor.BN(1000),
-            [milestone("M1", 30), milestone("M2", 30)]
+            [milestone("M1", 30), milestone("M2", 30)],
+            ...defaultCreateProjectTail()
           )
           .accountsStrict({
             owner: payer.publicKey,
@@ -191,6 +249,7 @@ describe("buildfi", () => {
             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            builder: builderPda(payer.publicKey),
           })
           .signers([projectKp, participationMintKp])
           .rpc();
@@ -225,7 +284,8 @@ describe("buildfi", () => {
           "Deposit Project",
           "For deposit tests",
           new anchor.BN(50_000 * 1e6),
-          [milestone("Phase 1", 100)]
+          [milestone("Phase 1", 100)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -238,6 +298,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();
@@ -312,6 +373,9 @@ describe("buildfi", () => {
       const participationAccount = await getAccount(connection, buyerParticipationAta);
       expect(Number(participationAccount.amount.toString())).to.equal(amount.toNumber());
 
+      const projectAfter = await program.account.project.fetch(projectPk);
+      expect(projectAfter.totalCapitalRaised.eq(amount)).to.be.true;
+
       const buyerAccount = await program.account.buyer.fetch(buyerAccountPda);
       expect(buyerAccount.user.equals(buyerKp.publicKey)).to.be.true;
       expect(buyerAccount.amount.eq(amount)).to.be.true;
@@ -365,7 +429,8 @@ describe("buildfi", () => {
           "Release Project",
           "For release tests",
           new anchor.BN(100_000 * 1e6),
-          [milestone("First", 50), milestone("Second", 50)]
+          [milestone("First", 50), milestone("Second", 50)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -378,6 +443,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();
@@ -532,7 +598,8 @@ describe("buildfi", () => {
           "Refund Project",
           "For refund tests",
           new anchor.BN(20_000 * 1e6),
-          [milestone("Only", 100)]
+          [milestone("Only", 100)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -545,6 +612,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();
@@ -655,7 +723,8 @@ describe("buildfi", () => {
           "No Refund Project",
           "Release then refund",
           new anchor.BN(10_000 * 1e6),
-          [milestone("A", 50), milestone("B", 50)]
+          [milestone("A", 50), milestone("B", 50)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -668,6 +737,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projKp, partMintKp])
         .rpc();
@@ -787,7 +857,8 @@ describe("buildfi", () => {
           "To Delete",
           "Empty vault",
           new anchor.BN(5_000 * 1e6),
-          [milestone("One", 100)]
+          [milestone("One", 100)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -800,6 +871,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();
@@ -838,7 +910,8 @@ describe("buildfi", () => {
           "No Delete Yet",
           "Has funds",
           new anchor.BN(5_000 * 1e6),
-          [milestone("One", 100)]
+          [milestone("One", 100)],
+          ...defaultCreateProjectTail()
         )
         .accountsStrict({
           owner: payer.publicKey,
@@ -851,6 +924,7 @@ describe("buildfi", () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          builder: builderPda(payer.publicKey),
         })
         .signers([projectKp, participationMintKp])
         .rpc();

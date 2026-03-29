@@ -27,7 +27,7 @@ pub struct CreateProject<'info> {
         payer = owner,
         space = Project::LEN,
     )]
-    pub project: Account<'info, Project>,
+    pub project: Box<Account<'info, Project>>,
 
     /// PDA used to sign vault and participation mint operations. Validated in instruction.
     /// CHECK: validated in create_project instruction
@@ -50,6 +50,15 @@ pub struct CreateProject<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
+
+    #[account(
+        init_if_needed,
+        payer = owner,
+        space = Builder::LEN,
+        seeds = [b"builder", owner.key().as_ref()],
+        bump
+    )]
+    pub builder: Box<Account<'info, Builder>>,
 }
 
 #[derive(Accounts)]
@@ -75,15 +84,15 @@ pub struct Deposit<'info> {
 
     /// Must be buyer's USDC ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
-    pub buyer_usdc_ata: InterfaceAccount<'info, TokenAccount>,
+    pub buyer_usdc_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Must be buyer's participation ATA (validated in instruction to avoid stack overflow).
     #[account(mut)]
-    pub buyer_participation_ata: InterfaceAccount<'info, TokenAccount>,
+    pub buyer_participation_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(mut)]
-    pub participation_mint: InterfaceAccount<'info, Mint>,
-    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub participation_mint: Box<InterfaceAccount<'info, Mint>>,
+    pub usdc_mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// CHECK: project_authority PDA, validated in instruction
     #[account(mut, seeds = [b"project_authority", project.key().as_ref()], bump = project.bump)]
@@ -99,7 +108,7 @@ pub struct ReleaseCapital<'info> {
     pub owner: Signer<'info>,
 
     #[account(mut, has_one = owner, has_one = vault)]
-    pub project: Account<'info, Project>,
+    pub project: Box<Account<'info, Project>>,
 
     /// CHECK: project_authority PDA
     #[account(mut, seeds = [b"project_authority", project.key().as_ref()], bump = project.bump)]
@@ -160,7 +169,7 @@ pub struct DeleteProject<'info> {
         has_one = participation_mint,
         close = owner,
     )]
-    pub project: Account<'info, Project>,
+    pub project: Box<Account<'info, Project>>,
 
     /// CHECK: project_authority PDA
     #[account(mut, seeds = [b"project_authority", project.key().as_ref()], bump = project.bump)]
@@ -186,14 +195,53 @@ pub mod buildfi {
 
     /// Create a new project: project account (keypair), vault PDA, participation mint.
     /// Project authority PDA signs for vault and mint.
+    #[allow(clippy::too_many_arguments)]
     pub fn create_project(
         ctx: Context<CreateProject>,
         name: String,
         description: String,
         funding_target: u64,
         milestones: Vec<Milestone>,
+        builder_name: String,
+        builder_description: String,
+        stage: u8,
+        project_code: String,
+        image_url: String,
+        location_name: String,
+        geo_lat: i64,
+        geo_lng: i64,
+        vision: String,
+        investment_thesis: String,
+        program_rules_url: String,
+        project_docs_url: String,
+        milestones_docs_url: String,
+        duration_days: u64,
+        risk_level: u8,
+        target_return_bps: u16,
     ) -> Result<()> {
-        instructions::create_project::handler(ctx, name, description, funding_target, milestones)
+        instructions::create_project::handler(
+            ctx,
+            name,
+            description,
+            funding_target,
+            milestones,
+            builder_name,
+            builder_description,
+            stage,
+            project_code,
+            image_url,
+            location_name,
+            geo_lat,
+            geo_lng,
+            vision,
+            investment_thesis,
+            program_rules_url,
+            project_docs_url,
+            milestones_docs_url,
+            duration_days,
+            risk_level,
+            target_return_bps,
+        )
     }
 
     /// Deposit USDC into project vault and mint 1:1 participation tokens to buyer.

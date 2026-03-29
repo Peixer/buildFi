@@ -34,6 +34,14 @@ export function projectAuthorityPda(projectPk: PublicKey): PublicKey {
   return pda;
 }
 
+export function builderPda(owner: PublicKey): PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("builder"), owner.toBuffer()],
+    PROGRAM_ID
+  );
+  return pda;
+}
+
 export function vaultAddress(projectAuthority: PublicKey, usdcMint: PublicKey): PublicKey {
   return getAssociatedTokenAddressSync(
     usdcMint,
@@ -44,18 +52,58 @@ export function vaultAddress(projectAuthority: PublicKey, usdcMint: PublicKey): 
   );
 }
 
-/** Milestone for create_project: name as 32-byte array, percentage 0-100. */
-export function milestone(name: string, percentage: number): { name: number[]; percentage: number } {
+/** Milestone for create_project: 32-byte name, percentage, status, estimatedCompletion (i64). */
+export function encodeMilestone(
+  name: string,
+  percentage: number,
+  status = 0,
+  estimatedCompletion: BN = new BN(0)
+): { name: number[]; percentage: number; status: number; estimatedCompletion: BN } {
   const nameBytes = Buffer.alloc(32);
   Buffer.from(name, "utf8").copy(nameBytes);
-  return { name: Array.from(nameBytes), percentage };
+  return {
+    name: Array.from(nameBytes),
+    percentage,
+    status,
+    estimatedCompletion,
+  };
+}
+
+export interface CreateProjectMilestoneInput {
+  name: string;
+  percentage: number;
+  status?: number;
+  /** Unix seconds; omit or 0 for unset */
+  estimatedCompletion?: number;
 }
 
 export interface CreateProjectParams {
   name: string;
   description: string;
   fundingTargetLamports: number;
-  milestones: Array<{ name: string; percentage: number }>;
+  milestones: CreateProjectMilestoneInput[];
+  builderName: string;
+  builderDescription: string;
+  stage: number;
+  projectCode: string;
+  imageUrl: string;
+  locationName: string;
+  /** Microdegrees (degrees × 1_000_000), matches on-chain i64 */
+  geoLat: string | number | BN;
+  geoLng: string | number | BN;
+  vision: string;
+  investmentThesis: string;
+  programRulesUrl: string;
+  projectDocsUrl: string;
+  milestonesDocsUrl: string;
+  durationDays: string | number | BN;
+  riskLevel: number;
+  targetReturnBps: number;
+}
+
+function toBn(v: string | number | BN): BN {
+  if (v instanceof BN) return v;
+  return new BN(String(v), 10);
 }
 
 /**
@@ -73,12 +121,41 @@ export async function buildCreateProjectTx(
   const participationMintKp = Keypair.generate();
   const projectAuthority = projectAuthorityPda(projectKp.publicKey);
   const vault = vaultAddress(projectAuthority, usdcMint);
+  const builder = builderPda(owner);
 
-  const milestones = params.milestones.map((m) => milestone(m.name, m.percentage));
+  const milestones = params.milestones.map((m) =>
+    encodeMilestone(
+      m.name,
+      m.percentage,
+      m.status ?? 0,
+      new BN(m.estimatedCompletion ?? 0)
+    )
+  );
   const fundingTarget = new BN(params.fundingTargetLamports);
 
   const createProjectIx = await (program.methods as any)
-    .createProject(params.name, params.description, fundingTarget, milestones)
+    .createProject(
+      params.name,
+      params.description,
+      fundingTarget,
+      milestones,
+      params.builderName,
+      params.builderDescription,
+      params.stage,
+      params.projectCode,
+      params.imageUrl,
+      params.locationName,
+      toBn(params.geoLat),
+      toBn(params.geoLng),
+      params.vision,
+      params.investmentThesis,
+      params.programRulesUrl,
+      params.projectDocsUrl,
+      params.milestonesDocsUrl,
+      toBn(params.durationDays),
+      params.riskLevel,
+      params.targetReturnBps
+    )
     .accountsStrict({
       owner,
       project: projectKp.publicKey,
@@ -90,6 +167,7 @@ export async function buildCreateProjectTx(
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY,
+      builder,
     })
     .signers([projectKp, participationMintKp])
     .instruction();

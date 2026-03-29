@@ -30,4 +30,24 @@ pub enum BuildFiError {
     RefundAfterReleaseNotAllowed,
     #[msg("Vault must be empty to delete project")]
     VaultMustBeEmpty,
+    #[msg("Project code exceeds max length")]
+    ProjectCodeTooLong,
+    #[msg("Image URL exceeds max length")]
+    ImageUrlTooLong,
+    #[msg("Location name exceeds max length")]
+    LocationNameTooLong,
+    #[msg("Vision exceeds max length")]
+    VisionTooLong,
+    #[msg("Investment thesis exceeds max length")]
+    InvestmentThesisTooLong,
+    #[msg("URL exceeds max length")]
+    UrlTooLong,
+    #[msg("Invalid builder account for this owner")]
+    InvalidBuilder,
+    #[msg("Invalid project stage")]
+    InvalidProjectStage,
+    #[msg("Invalid risk level")]
+    InvalidRiskLevel,
+    #[msg("Invalid milestone status")]
+    InvalidMilestoneStatus,
 }

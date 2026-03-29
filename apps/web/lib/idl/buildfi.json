@@ -73,6 +73,25 @@
           "name": "rent",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "builder",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "builder"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "owner"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -95,6 +114,70 @@
               "defined": "Milestone"
             }
           }
+        },
+        {
+          "name": "builderName",
+          "type": "string"
+        },
+        {
+          "name": "builderDescription",
+          "type": "string"
+        },
+        {
+          "name": "stage",
+          "type": "u8"
+        },
+        {
+          "name": "projectCode",
+          "type": "string"
+        },
+        {
+          "name": "imageUrl",
+          "type": "string"
+        },
+        {
+          "name": "locationName",
+          "type": "string"
+        },
+        {
+          "name": "geoLat",
+          "type": "i64"
+        },
+        {
+          "name": "geoLng",
+          "type": "i64"
+        },
+        {
+          "name": "vision",
+          "type": "string"
+        },
+        {
+          "name": "investmentThesis",
+          "type": "string"
+        },
+        {
+          "name": "programRulesUrl",
+          "type": "string"
+        },
+        {
+          "name": "projectDocsUrl",
+          "type": "string"
+        },
+        {
+          "name": "milestonesDocsUrl",
+          "type": "string"
+        },
+        {
+          "name": "durationDays",
+          "type": "u64"
+        },
+        {
+          "name": "riskLevel",
+          "type": "u8"
+        },
+        {
+          "name": "targetReturnBps",
+          "type": "u16"
         }
       ]
     },
@@ -435,6 +518,40 @@
   ],
   "accounts": [
     {
+      "name": "Builder",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "docs": [
+              "Max length MAX_NAME_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "docs": [
+              "Max length MAX_DESCRIPTION_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "isKybVerified",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "Buyer",
       "type": {
         "kind": "struct",
@@ -526,6 +643,106 @@
               "How many milestones have had capital released"
             ],
             "type": "u8"
+          },
+          {
+            "name": "stage",
+            "type": "u8"
+          },
+          {
+            "name": "projectCode",
+            "docs": [
+              "Max length MAX_PROJECT_CODE_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "imageUrl",
+            "docs": [
+              "Max length MAX_URL_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "locationName",
+            "docs": [
+              "Max length MAX_LOCATION_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "geoLat",
+            "docs": [
+              "Latitude in microdegrees (degrees × 1_000_000)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "geoLng",
+            "docs": [
+              "Longitude in microdegrees (degrees × 1_000_000)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "totalCapitalRaised",
+            "type": "u64"
+          },
+          {
+            "name": "builder",
+            "docs": [
+              "Builder PDA for the project owner"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "vision",
+            "docs": [
+              "Max length MAX_VISION_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "investmentThesis",
+            "docs": [
+              "Max length MAX_THESIS_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "programRulesUrl",
+            "docs": [
+              "Max length MAX_URL_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "projectDocsUrl",
+            "docs": [
+              "Max length MAX_URL_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "milestonesDocsUrl",
+            "docs": [
+              "Max length MAX_URL_LEN"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "durationDays",
+            "type": "u64"
+          },
+          {
+            "name": "riskLevel",
+            "type": "u8"
+          },
+          {
+            "name": "targetReturnBps",
+            "docs": [
+              "Target return in basis points (100 = 1%)"
+            ],
+            "type": "u16"
           }
         ]
       }
@@ -535,7 +752,7 @@
     {
       "name": "Milestone",
       "docs": [
-        "Single milestone: name (fixed 32 bytes) and percentage of total funding (0–100)."
+        "Single milestone: fixed name, funding percentage, status, estimated completion (Unix secs, `0` = unset)."
       ],
       "type": {
         "kind": "struct",
@@ -552,6 +769,14 @@
           {
             "name": "percentage",
             "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          },
+          {
+            "name": "estimatedCompletion",
+            "type": "i64"
           }
         ]
       }
@@ -627,6 +852,56 @@
       "code": 6013,
       "name": "VaultMustBeEmpty",
       "msg": "Vault must be empty to delete project"
+    },
+    {
+      "code": 6014,
+      "name": "ProjectCodeTooLong",
+      "msg": "Project code exceeds max length"
+    },
+    {
+      "code": 6015,
+      "name": "ImageUrlTooLong",
+      "msg": "Image URL exceeds max length"
+    },
+    {
+      "code": 6016,
+      "name": "LocationNameTooLong",
+      "msg": "Location name exceeds max length"
+    },
+    {
+      "code": 6017,
+      "name": "VisionTooLong",
+      "msg": "Vision exceeds max length"
+    },
+    {
+      "code": 6018,
+      "name": "InvestmentThesisTooLong",
+      "msg": "Investment thesis exceeds max length"
+    },
+    {
+      "code": 6019,
+      "name": "UrlTooLong",
+      "msg": "URL exceeds max length"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidBuilder",
+      "msg": "Invalid builder account for this owner"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidProjectStage",
+      "msg": "Invalid project stage"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidRiskLevel",
+      "msg": "Invalid risk level"
+    },
+    {
+      "code": 6023,
+      "name": "InvalidMilestoneStatus",
+      "msg": "Invalid milestone status"
     }
   ]
 }

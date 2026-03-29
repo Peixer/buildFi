@@ -24,13 +24,13 @@ pub fn handler(ctx: Context<crate::Deposit>, amount: u64) -> Result<()> {
         ctx.accounts.buyer_participation_ata.key() == expected_participation_ata,
         BuildFiError::InvalidTokenAccount
     );
-    let project = &ctx.accounts.project;
     let buyer_account = &mut ctx.accounts.buyer_account;
-    let project_key = project.key();
+    let project_key = ctx.accounts.project.key();
+    let project_bump = ctx.accounts.project.bump;
     let seeds: &[&[u8]] = &[
         b"project_authority",
         project_key.as_ref(),
-        &[project.bump],
+        &[project_bump],
     ];
     let signer_seeds = &[seeds];
 
@@ -62,7 +62,10 @@ pub fn handler(ctx: Context<crate::Deposit>, amount: u64) -> Result<()> {
     )?;
 
     buyer_account.user = ctx.accounts.buyer.key();
-    buyer_account.project = project.key();
+    buyer_account.project = project_key;
     buyer_account.amount = buyer_account.amount.saturating_add(amount);
+
+    let project = &mut ctx.accounts.project;
+    project.total_capital_raised = project.total_capital_raised.saturating_add(amount);
     Ok(())
 }
